@@ -13,42 +13,22 @@ shards:
         # This target need not import elements.html file as it will be imported in index.html file.
         importParent: false
         sources:
-            - name: sample-about/sample-about.html
-            - name: sample-account/sample-account.html
-            - name: sample-admin-list/sample-admin-list.html
-            - name: sample-dashboard/sample-dashboard.html
-            - name: sample-home/sample-home.html
-            - name: sample-sp-list/sample-sp-list.html
-            - name: sample-sp-programs-list/sample-sp-programs-list.html
-            - name: sample-view-program/sample-view-program.html
-            - name: sample-view-sp/sample-view-sp.html
-        # paper-textarea is exclusive in sample-view-sp and will not be vulanized into view-elements.html
-        # paper-textarea is also in other components like sample-admin.html below and eventually
+            - name: view-pages/view-page-one.html
+                  # view-page-two imports edit-page-one. It is a component itself.
+                  # So it is excluded from vulcanizing into view-page-two.
+                  # As hydrolysis does not support exclusion, edit-page-one included in getCommonDeps process.
+                  # But excluded while vulcanizing. This is an outstanding issue that needs to be fixed.
+            -     name: view-pages/view-page-two.html
+                  exclude:
+                      - edit-pages/edit-page-one.html
+        # paper-textarea is exclusive in view-page-two and will not be vulanized into view-elements.html
+        # paper-textarea is also in other components like edit-page-two.html below and eventually
         # get vulcanized twice.To avoid this, it is force vulcanized into view-elements.html
         include: [../bower_components/paper-input/paper-textarea.html]
 
         # 3rd target file
-    -   target: input-elements.html
+    -   target: edit-elements.html
         # This target will import view-elements.html file.
         sources:
-            - name: sample-program-list/sample-program-list.html
-            - name: sample-login/sample-login.html
-                  # sample-register imports sample-user and sample-sp. They are independent component themseleves.
-                  # So they are excluded from vulcanizing into sample-register.
-                  # As hydrolysis does not support exclusion, these two elements go through compute dependencies process.
-                  # This is an outstanding issue that needs to be fixed.
-            -     name: sample-register/sample-register.html
-                  exclude:
-                      - sample-user/sample-user.html
-                      - sample-sp/sample-sp.html
-            - name: sample-user/sample-user.html
-            - name: sample-admin/sample-admin.html
-        include: [../bower_components/paper-toggle-button/paper-toggle-button.html]
-
-        # 4th target file
-    -   target: form-elements.html
-        # This target will import input-elements.html file.
-        sources:
-            - name: sample-program/sample-program.html
-            - name: sample-sp/sample-sp.html
-            - name: sample-programs/sample-programs.html
+            - name: edit-pages/edit-page-one.html
+            - name: edit-pages/edit-page-two.html
