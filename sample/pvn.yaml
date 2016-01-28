@@ -1,0 +1,50 @@
+name: Progressive vulcalize
+shards:
+        # 1st target file
+    -   target: elements.html
+        # elements.html file contains imports needed to load index.html and
+        # should be vulcanized into target.
+        vulcanizeAll: true
+        sources:
+            - name: elements.html
+
+        # 2nd target file
+    -   target: view-elements.html
+        # This target need not import elements.html file as it will be imported in index.html file.
+        importParent: false
+        sources:
+            - name: sample-about/sample-about.html
+            - name: sample-account/sample-account.html
+            - name: sample-admin-list/sample-admin-list.html
+            - name: sample-dashboard/sample-dashboard.html
+            - name: sample-home/sample-home.html
+            - name: sample-sp-list/sample-sp-list.html
+            - name: sample-sp-programs-list/sample-sp-programs-list.html
+            - name: sample-view-program/sample-view-program.html
+            - name: sample-view-sp/sample-view-sp.html
+        # paper-textarea is exclusive in sample-view-sp and will not be vulanized into view-elements.html
+        # paper-textarea is also in other components like sample-admin.html below and eventually
+        # get vulcanized twice.To avoid this, it is force vulcanized into view-elements.html
+        include: [../bower_components/paper-input/paper-textarea.html]
+
+        # 3rd target file
+    -   target: input-elements.html
+        # This target will import view-elements.html file.
+        sources:
+            - name: sample-program-list/sample-program-list.html
+            - name: sample-login/sample-login.html
+            -     name: sample-register/sample-register.html
+                  exclude:
+                      - sample-user/sample-user.html
+                      - sample-sp/sample-sp.html
+            - name: sample-user/sample-user.html
+            - name: sample-admin/sample-admin.html
+        include: [../bower_components/paper-toggle-button/paper-toggle-button.html]
+
+        # 4th target file
+    -   target: form-elements.html
+        # This target will import input-elements.html file.
+        sources:
+            - name: sample-program/sample-program.html
+            - name: sample-sp/sample-sp.html
+            - name: sample-programs/sample-programs.html

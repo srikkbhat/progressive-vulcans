@@ -1,0 +1,35 @@
+{
+  "name": "progressive-vulcans",
+  "version": "0.0.1",
+  "description": "Build an app with progressive dependencies!",
+  "main": "pvn.js",
+  "bin": "bin/pvn.js",
+  "scripts": {
+    "test": "node_modules/.bin/jshint pvn.js bin"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/srikkbhat/progressive-vulcans.git"
+  },
+  "author": "srikkbhat",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/srikkbhat/progressive-vulcans/issues"
+  },
+  "homepage": "https://github.com/srikkbhat/progressive-vulcans",
+  "dependencies": {
+    "async": "^1.5.2",
+    "command-line-args": "^1.0.0",
+    "es6-promise": "^2.1.0",
+    "hydrolysis": "^1.19.1",
+    "js-yaml": "^3.5.2",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.4.3",
+    "vulcanize": "^1.13.0"
+  },
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "jshint": "^2.7.0",
+    "mocha": "^2.2.4"
+  }
+}
