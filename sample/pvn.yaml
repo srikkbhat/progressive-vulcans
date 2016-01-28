@@ -33,6 +33,10 @@ shards:
         sources:
             - name: sample-program-list/sample-program-list.html
             - name: sample-login/sample-login.html
+                  # sample-register imports sample-user and sample-sp. They are independent component themseleves.
+                  # So they are excluded from vulcanizing into sample-register.
+                  # As hydrolysis does not support exclusion, these two elements go through compute dependencies process.
+                  # This is an outstanding issue that needs to be fixed.
             -     name: sample-register/sample-register.html
                   exclude:
                       - sample-user/sample-user.html
