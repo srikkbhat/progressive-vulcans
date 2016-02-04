@@ -3,8 +3,7 @@
 Builds multi page app with incremental shared dependencies.
 
 #### definition
-An YAML file containing the incremental target files and the lazy elements that needs to be vulcanized into them.
-Sample file is provided in `sample` folder. This file should be placed in the root directory.
+An YAML file containing the incremental target files and the lazy elements that needs to be vulcanized into them. Check the `sample` folder for an e.g.
 
 ### Usage
  `pvn <options>`
@@ -16,3 +15,6 @@ Sample file is provided in `sample` folder. This file should be placed in the ro
 - `-f`, `--definition string`          YAML file containing the inputs for vulcanization process. Defaults to 'pvn.yaml'.
 - `-e`, `--elementsdir string`         Directory relative to root where elements to be vulcanized are stored. Defaults to 'app/elements/'.
 - `-w`, `--workdir string`             Temporary directory for holding in-process files. DANGER: this directory will be deleted upon tool success. Defaults to 'tmp/'
+
+###Build tools
+- [gulp-progressive-vulcans](https://www.npmjs.com/package/gulp-progressive-vulcans)

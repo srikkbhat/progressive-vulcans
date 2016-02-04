@@ -10,23 +10,32 @@ var mkdirp = require('mkdirp');
 var url = require('url');
 var Vulcan = require('vulcanize');
 var fs = require('fs');
+var rimraf = require('rimraf');
 var Promise = require('es6-promise').Promise;
 var path = require('path');
 var yaml = require('js-yaml');
 
+function fixPath(fpath) {
+  if (fpath !== '' && !/[\/\\]$/.test(fpath)) {
+    fpath += '/';
+  }
+  return fpath;
+}
 var ProgressiveVulcans = function ProgressiveVulcans(options) {
-  this.bowerdir = options.bowerdir;
-  this.definition = options.definition;
-  this.root = options.root;
+  this.bowerdir = fixPath(options.bowerdir || 'app/bower_components/');
+  this.root = fixPath(options.root || process.cwd());
+  options.destdir = fixPath(options.destdir || 'dist/elements/');
   this.destdir = url.resolve(this.root, options.destdir);
+  options.elementsdir = fixPath(options.elementsdir || 'app/elements/');
   this.elementsdir = url.resolve(this.root, options.elementsdir);
-  this.workdir = options.workdir;
+  this.workdir = fixPath(options.workdir || '.pvn/');
   this.built = false;
   this.pvnDefinitions = {};
   this.inImports = [];
   this.vulcanized = [];
   this.prevTargetFile = '';
   this.pvnPromises = [];
+  this.pvnOutFiles = [];
 };
 
 
@@ -51,8 +60,7 @@ ProgressiveVulcans.prototype = {
     return this._getAnalyzer(endpoint).then(function (analyzer) {
       return analyzer._getDependencies(endpoint);
     }).catch(function (err) {
-      console.log(err);
-      console.log('FAILED IN GETDEPS');
+      console.error('Failed in getDeps ', err);
     });
   },
   _getCommonDeps: function _getCommonDeps(endpoints, include, vulcanizeAll) {
@@ -71,7 +79,7 @@ ProgressiveVulcans.prototype = {
                 //Error not thrown as this.inImports and this.vulcanized contain result of hydrolysis.
                 //Some elements that are excluded during vulcanize might still be in those arrays.
                 //Needs fix.
-                console.log('WARN - Element might be double vulcanized: ', dep);
+                console.warn('Element might be double vulcanized: ', dep);
               }
               if (!common[dep]) {
                 common[dep] = 1;
@@ -102,7 +110,7 @@ ProgressiveVulcans.prototype = {
         return result;
       }.bind(this))
       .catch(function (err) {
-        console.log('err: ', err);
+        console.error('Failed during vulcanization: ', err);
       });
   },
   _createSharedImports: function _createSharedImports(outFile, endpoints, include, vulcanizeAll) {
@@ -114,6 +122,7 @@ ProgressiveVulcans.prototype = {
       var outputPath = url.resolve(workdirPath, outFile);
       var commonDeps = result.sharedDeps;
       var importUrl, depUrl;
+
 
       for (var dep in commonDeps) {
         depUrl = commonDeps[dep];
@@ -158,6 +167,7 @@ ProgressiveVulcans.prototype = {
                 mkdirp.sync(outDir);
                 var fd = fs.openSync(outPath, 'w');
                 fs.writeSync(fd, doc);
+                this.pvnOutFiles.push(outPath);
                 resolve(outPath);
               }
             }.bind(this));
@@ -194,6 +204,7 @@ ProgressiveVulcans.prototype = {
             mkdirp.sync(outDir);
             var fd = fs.openSync(outPath, 'w');
             fs.writeSync(fd, doc);
+            this.pvnOutFiles.push(outPath);
             resolve(outPath);
           }
         }.bind(this));
@@ -205,11 +216,11 @@ ProgressiveVulcans.prototype = {
     this.vulcanized = this.vulcanized.concat(result.sharedDeps);
     this.vulcanized = this.vulcanized.concat(result.nonSharedDeps);
     this.inImports = this.inImports.concat(result.sharedDeps);
-    console.log('INFO - End processing target: ', targetFile);
+    console.info('End processing target: ', targetFile);
     callback();
   },
   _processShard: function _processShard(shard, callback) {
-    console.log('INFO - Started processing target: ', shard.target);
+    console.info('Started processing target: ', shard.target);
     var _targetFile = shard.target;
     var _vulcanizeAll = (shard.hasOwnProperty('vulcanizeAll')) ? shard.vulcanizeAll : false;
     var _importParent = (shard.hasOwnProperty('importParent')) ? shard.importParent : true;
@@ -231,12 +242,8 @@ ProgressiveVulcans.prototype = {
         callback(err);
       })
   },
-  _prepOutput: function _prepOutput() {
-    var outDir = url.resolve(this.root, this.destdir);
-    mkdirp.sync(outDir);
-  },
-  _loadYaml: function _loadYaml() {
-    this.pvnDefinitions = yaml.safeLoad(fs.readFileSync(this.definition));
+  _loadYaml: function _loadYaml(filename) {
+    this.pvnDefinitions = yaml.safeLoad(fs.readFileSync(filename));
     this.pvnDefinitions.shards.forEach(function (shard) {
       shard.sources.forEach(function (source) {
         source.name = path.relative(this.root, path.resolve(this.elementsdir, source.name));
@@ -253,13 +260,19 @@ ProgressiveVulcans.prototype = {
       }
     }.bind(this));
   },
-  build: function build() {
+  _init: function _init() {
+    var outDir = url.resolve(this.root, this.destdir);
+    this._workDir = url.resolve(this.root, this.workdir);
+    mkdirp.sync(outDir);
+    mkdirp.sync(this._workDir);
+  },
+  build: function build(pvnDefinitionFile) {
     if (this.built) {
       throw new Error('build may only be called once.');
     }
     this.built = true;
-    this._prepOutput();
-    this._loadYaml();
+    this._init();
+    this._loadYaml(pvnDefinitionFile);
     return new Promise(function (resolve, reject) {
       async.eachSeries(
         this.pvnDefinitions.shards,
@@ -270,8 +283,9 @@ ProgressiveVulcans.prototype = {
           }
           Promise.all(this.pvnPromises)
             .then(function () {
+              rimraf.sync(this._workDir, {});
               resolve();
-            })
+            }.bind(this))
             .catch(function (error) {
               reject(error);
             })
